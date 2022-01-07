@@ -31,4 +31,4 @@ jobs:
       - name: Update docs branch
         run: git add docs
       - run: git commit -m "Publish updated documents"
-      - run: git push
+      - run: git push --set-upstream origin docs
