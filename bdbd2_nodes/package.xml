@@ -3,8 +3,9 @@
 <package format="3">
   <name>bdbd2_nodes</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Contains the nodes for my personal robot named BDBD, ROS2 version</description>
   <maintainer email="kent@caspia.com">R. Kent James</maintainer>
+  <author email="kent@caspia.com">R. Kent James</author>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
@@ -14,5 +15,6 @@
 
   <export>
     <build_type>ament_cmake</build_type>
+    <rosdoc2>rosdoc2.yaml</rosdoc2>
   </export>
 </package>

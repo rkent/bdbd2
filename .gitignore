@@ -3,7 +3,7 @@ build/
 install/
 
 # Ignore generated docs
+generated
 
 *.pcd
 *.pyc
-
