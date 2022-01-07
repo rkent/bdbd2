@@ -1,2 +1,3 @@
 # bdbd2
-My personal robot named BDBD, ROS2 version
+
+This is a repository for my personal robot named BDBD, ROS2 version.
