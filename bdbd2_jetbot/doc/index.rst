@@ -1,4 +1,4 @@
-Package bdbd2_nodes
+Package bdbd2_jetbot
 ===============================================================================
 
 Contains the nodes for my personal robot named BDBD, ROS2 version

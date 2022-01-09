@@ -16,5 +16,5 @@ echo "rosdoc2 installed, running"
 cd $GITHUB_WORKSPACE
 
 rosdoc2 build --debug -o docs -u $BASE_URL -p ./bdbd2_msgs
-rosdoc2 build --debug -o docs -u $BASE_URL -p ./bdbd2_nodes
+rosdoc2 build --debug -o docs -u $BASE_URL -p ./bdbd2_jetbot
 rosdoc2 build --debug -o docs -u $BASE_URL -p ./bdbd2

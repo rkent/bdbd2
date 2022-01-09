@@ -44,7 +44,7 @@ extensions = [
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-# templates_path = ['/home/kent/ros2_wses/fqdemo_ws/src/fqdemo_nodes/_templates']
+# templates_path = ['/home/kent/ros2_wses/bdbd2_ws/src/bdbd2_nodes/_templates']
 import os
 print(f'PWD: {os.getcwd()}')
 templates_path = ['_templates']
