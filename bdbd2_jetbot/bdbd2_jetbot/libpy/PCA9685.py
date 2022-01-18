@@ -2,6 +2,8 @@
 """Raspi PCA9685 16-Channel PWM Servo Driver
 
 Software provided with Waveshare Pan/Tilt hat. Available at https://github.com/waveshare/Pan-Tilt-HAT. No License specified.
+
+Modified by R. Kent James <kent@caspia.com> All modifications done under Apache 2 license.
 """
 import time
 import math
@@ -98,3 +100,30 @@ class PCA9685:
   def exit_PCA9685(self):
     self.write(self.__MODE2, 0x00)
 
+if __name__ == '__main__':
+    # A simple demo of the pan/tilt
+    PAN_MIN = 10
+    PAN_MAX = 170
+    PAN_CENTER = 90
+    TILT_MIN = 5
+    TILT_MAX = 85
+    TILT_CENTER = 45
+    import time
+    print('simple test of pan/tilt')
+    pwm = PCA9685()
+    pwm.setPWMFreq(50)
+    pwm.setRotationAngle(1, 0)
+    try:
+        for i in range(PAN_MIN, PAN_MAX, 2): 
+            pwm.setRotationAngle(1, i)
+            j = TILT_MIN + (2 * i % (TILT_MAX - TILT_MIN))
+            pwm.setRotationAngle(0, j)   
+            time.sleep(0.1)
+    except Exception as e:
+        print('Exception: {}'.format(e))
+    finally:
+        pwm.setRotationAngle(1, PAN_CENTER)
+        pwm.setRotationAngle(0, TILT_CENTER)
+        time.sleep(0.5)
+        pwm.exit_PCA9685()
+        print('PCA9685 test end')
