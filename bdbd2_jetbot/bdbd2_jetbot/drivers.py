@@ -15,14 +15,21 @@
 #   limitations under the License.
 
 """
-(This is module-level documentation. This docstring must be inserted
-before any code in the module.)
+This file contains a class implementing a single ROS2 node for interfacing with robot hardware.
 
 Overview
 ========
 This ROS2 node provides interfaces to hardware on the Jetbot-derived BDBD robot.
-
 Most of these drivers are best available in Python, hence this node is also in Python.
+
+Interfaces to these hardware items:
+    - Pan/Tilt hat for the camera
+
+Topic Subscriptions
+-------------------
+
+- ``pantilt`` (bdbd2_msgs.msg.PanTilt): A request to set the pan
+  and tilt of the camera to specified angles.
 """
 
 from queue import Queue, Empty

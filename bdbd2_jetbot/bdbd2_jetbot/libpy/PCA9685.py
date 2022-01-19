@@ -5,23 +5,23 @@ Software provided with Waveshare Pan/Tilt hat. Available at https://github.com/w
 
 Modified by R. Kent James <kent@caspia.com> All modifications done under Apache 2 license.
 """
+
 import time
 import math
 import smbus
-# import pygame
-
 
 class PCA9685:
   """Raspi PCA9685 16-Channel PWM Servo Driver
 
   Usage:
   ::
-      pwm = PCA9685()
-      pwm.setPWMFreq(50)
-      tilt = 60
-      pan = 120
-      pwm.setRotationAngle(1, pan)
-      pwm.setRotationAngle(0, tilt)
+
+    pwm = PCA9685()
+    pwm.setPWMFreq(50)
+    tilt = 60
+    pan = 120
+    pwm.setRotationAngle(1, pan)
+    pwm.setRotationAngle(0, tilt)
   """
 
   # Registers/etc.
