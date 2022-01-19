@@ -4,7 +4,7 @@
 # This 'attic section' self-documents this file's type and version.
 type: 'rosdoc2 config'
 version: 1
-base_url: 'https://rosdabbler.github.io/bdbd2'
+base_url: 'https://rkent.github.io/bdbd2'
 
 ---
 

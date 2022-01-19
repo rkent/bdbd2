@@ -7,9 +7,9 @@ Contains the messages, actions, and services for my personal robot named BDBD, R
 
    Links
    -----
-   
-   
-   
+   * `Repository <https://github.com/rkent/bdbd2>`_
+   * `Website <https://rkent.github.io/bdbd2/bdbd2>`_
+   * `Bugtracker <https://github.com/rkent/bdbd2/issues>`_
 
 Project Documentation
 ---------------------

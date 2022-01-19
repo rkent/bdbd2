@@ -7,9 +7,17 @@ Contains the nodes for my personal robot named BDBD, ROS2 version
 
    Links
    -----
-   
-   
-   
+   * `Repository <https://github.com/rkent/bdbd2>`_
+   * `Website <https://rkent.github.io/bdbd2/bdbd2>`_
+   * `Bugtracker <https://github.com/rkent/bdbd2/issues>`_
+
+Package API
+-----------
+
+.. toctree::
+   :maxdepth: 2
+
+   Python API <generated/python/modules>
 
 Project Documentation
 ---------------------
