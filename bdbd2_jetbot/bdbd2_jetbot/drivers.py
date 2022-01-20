@@ -30,6 +30,11 @@ Topic Subscriptions
 
 - ``pantilt`` (bdbd2_msgs.msg.PanTilt): A request to set the pan
   and tilt of the camera to specified angles.
+
+Services Provided
+-----------------
+- ``set_pan_tilt`` (bdbd2_msgs.srv.SetPanTilt): A request to set the pan and tilt of the camera
+  to specified angles, with an empty response when done.
 """
 
 from queue import Queue, Empty
@@ -38,6 +43,7 @@ import time
 import traceback
 
 from bdbd2_msgs.msg import PanTilt
+from bdbd2_msgs.srv import SetPanTilt
 from bdbd2_jetbot.libpy.PCA9685 import PCA9685
 import rclpy
 from rclpy.node import Node
@@ -60,9 +66,8 @@ PAN_CORR = PAN_CENTER - PANC
 TILT_CORR = TILT_CENTER - TILTC
 PANTILT_DP = 2 # maximum degrees per interval for pan, half this for tilt
 D_TO_R = 3.1415926535 / 180. # degrees to radians
-PANTILT_RATE = 100 # Rate in hertz that the pantilt thread moves the mechanism
+PANTILT_PERIOD = 0.01 # Rate in seconds that the pantilt thread moves the mechanism
 SETTLE_SECONDS = 0.10 # allow the pan tilt to settle before sending service reponse
-
 
 class Drivers(Node):
     """Class for a ROS2 node that interfaces with basic hardware on BDBD robot"""
@@ -80,7 +85,21 @@ class Drivers(Node):
 
         self.pantilt_queue = Queue()
         self.pantilt_sub = self.create_subscription(PanTilt, 'pantilt', self.pantilt_sub_cb, 10)
-    
+        self.set_pantilt_service = self.create_service(
+            SetPanTilt, 'set_pan_tilt', self.handle_set_pan_tilt
+        )
+
+    def handle_set_pan_tilt(self, request, response):
+        """Handler for SetPanTilt service request"""
+        self.loginfo(f'SetPanTilt request {request.pan}, {request.tilt}, {request.raw}')
+        responseQueue = Queue()
+        self.pantilt_queue.put([request, responseQueue])
+        # wait for something to be put in queue
+        responseQueue.get()
+        # allow the mechanism to settle a little
+        time.sleep(SETTLE_SECONDS)
+        return response
+
     def pantilt_sub_cb(self, msg:PanTilt):
         """Callback for PanTilt message"""
         self.loginfo(f'PanTilt msg ({msg.pan}, {msg.tilt}, {msg.raw})')
@@ -93,7 +112,6 @@ class Drivers(Node):
         Read a queue with pantilt movement requests. A false entry in the queue
         message signals a thread exit.
         """
-        pantilt_rate = self.create_rate(PANTILT_RATE)
 
         pca = PCA9685()
         pca.setPWMFreq(50)
@@ -103,6 +121,7 @@ class Drivers(Node):
         tilt = TILTC - 2
         target_pan = pan
         target_tilt = tilt
+        responseQueue = None
         pca.setRotationAngle(1, pan)
         pca.setRotationAngle(0, tilt)
 
@@ -128,6 +147,7 @@ class Drivers(Node):
                 target_tilt = panTiltMsg.tilt - TILT_CORR
 
             while pan != target_pan or tilt != target_tilt:
+                start = time.time()
                 if pan < target_pan:
                     npan = min(target_pan, pan + PANTILT_DP)
                 else:
@@ -148,7 +168,11 @@ class Drivers(Node):
                     self.logerr(traceback.format_exc())
                     break
 
-                pantilt_rate.sleep()
+                time.sleep(max(0, start - time.time()))
+
+            if responseQueue:
+                responseQueue.put(None)
+                responseQueue = None
 
         # Thread shutdown
         pca.setRotationAngle(1, PAN_CENTER)
@@ -161,6 +185,7 @@ class Drivers(Node):
         """Main program for the node"""
         pantilt_thread = threading.Thread(target=self.pantilt_run)
         pantilt_thread.start()
+
         try:
             rclpy.spin(self)
         except KeyboardInterrupt:

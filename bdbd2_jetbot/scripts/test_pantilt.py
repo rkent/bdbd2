@@ -5,6 +5,7 @@ import time
 import threading
 
 from bdbd2_msgs.msg import PanTilt
+from bdbd2_msgs.srv import SetPanTilt
 import rclpy
 from rclpy.node import Node
 
@@ -32,6 +33,18 @@ def main(args=None):
     # https://answers.ros.org/question/358343/rate-and-sleep-function-in-rclpy-library-for-ros2/
     spinner = threading.Thread(target=rclpy.spin, args=[node], daemon=True)
     spinner.start()
+
+    # Test using a service
+    print('Test using a service')
+    client = node.create_client(SetPanTilt, 'set_pan_tilt')
+    for (pan, tilt) in values:
+        request = SetPanTilt.Request()
+        request.pan = float(pan)
+        request.tilt = float(tilt)
+        client.call(request)
+
+    # Test using a message
+    print('Test using a message')
     msg = PanTilt()
     for (pan, tilt) in values:
         msg.pan = float(pan)

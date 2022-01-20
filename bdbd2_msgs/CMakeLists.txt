@@ -15,6 +15,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PanTilt.msg"
+  "srv/SetPanTilt.srv"
 )
 
 if(BUILD_TESTING)
