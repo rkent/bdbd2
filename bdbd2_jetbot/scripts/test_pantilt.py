@@ -5,7 +5,7 @@ import time
 import threading
 
 from bdbd2_msgs.msg import PanTilt
-from bdbd2_msgs.srv import SetPanTilt
+from bdbd2_msgs.srv import SetPanTilt, GetPanTilt
 import rclpy
 from rclpy.node import Node
 
@@ -36,12 +36,18 @@ def main(args=None):
 
     # Test using a service
     print('Test using a service')
-    client = node.create_client(SetPanTilt, 'set_pan_tilt')
+    set_client = node.create_client(SetPanTilt, 'set_pan_tilt')
+    get_client = node.create_client(GetPanTilt, 'get_pan_tilt')
     for (pan, tilt) in values:
         request = SetPanTilt.Request()
         request.pan = float(pan)
         request.tilt = float(tilt)
-        client.call(request)
+        request.raw = True
+        set_client.call(request)
+        get_request = GetPanTilt.Request()
+        get_request.raw = True
+        response = get_client.call(get_request)
+        print(f'got {response.pan}, {response.tilt} expected {pan}, {tilt}')
 
     # Test using a message
     print('Test using a message')

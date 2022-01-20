@@ -43,7 +43,7 @@ import time
 import traceback
 
 from bdbd2_msgs.msg import PanTilt
-from bdbd2_msgs.srv import SetPanTilt
+from bdbd2_msgs.srv import SetPanTilt, GetPanTilt
 from bdbd2_jetbot.libpy.PCA9685 import PCA9685
 import rclpy
 from rclpy.node import Node
@@ -88,6 +88,21 @@ class Drivers(Node):
         self.set_pantilt_service = self.create_service(
             SetPanTilt, 'set_pan_tilt', self.handle_set_pan_tilt
         )
+        self.get_pantilt_service = self.create_service(
+            GetPanTilt, 'get_pan_tilt', self.handle_get_pan_tilt
+        )
+        self.pan = PAN_CENTER
+        self.tilt = TILT_CENTER
+
+    def handle_get_pan_tilt(self, request, response):
+        """Handler for GetPanTilt service"""
+        if request.raw:
+            response.pan = self.pan
+            response.tilt = self.tilt
+        else:
+            response.pan = self.pan + PAN_CORR
+            response.tilt = self.tilt + TILT_CORR
+        return response
 
     def handle_set_pan_tilt(self, request, response):
         """Handler for SetPanTilt service request"""
@@ -117,13 +132,13 @@ class Drivers(Node):
         pca.setPWMFreq(50)
         # self.pan, self.tilt are the raw values
         # these are set to slightly off center to force initial motion
-        pan = PANC - 3
-        tilt = TILTC - 2
-        target_pan = pan
-        target_tilt = tilt
+        self.pan = PANC - 3
+        self.tilt = TILTC - 2
+        target_pan = self.pan
+        target_tilt = self.tilt
         responseQueue = None
-        pca.setRotationAngle(1, pan)
-        pca.setRotationAngle(0, tilt)
+        pca.setRotationAngle(1, self.pan)
+        pca.setRotationAngle(0, self.tilt)
 
         while True:
             panTiltMsg = None
@@ -146,23 +161,23 @@ class Drivers(Node):
                 target_pan = panTiltMsg.pan - PAN_CORR
                 target_tilt = panTiltMsg.tilt - TILT_CORR
 
-            while pan != target_pan or tilt != target_tilt:
+            while self.pan != target_pan or self.tilt != target_tilt:
                 start = time.time()
-                if pan < target_pan:
-                    npan = min(target_pan, pan + PANTILT_DP)
+                if self.pan < target_pan:
+                    npan = min(target_pan, self.pan + PANTILT_DP)
                 else:
-                    npan = max(target_pan, pan - PANTILT_DP)
+                    npan = max(target_pan, self.pan - PANTILT_DP)
 
-                if tilt < target_tilt:
-                    ntilt = min(target_tilt, tilt + PANTILT_DP/2)
+                if self.tilt < target_tilt:
+                    ntilt = min(target_tilt, self.tilt + PANTILT_DP/2)
                 else:
-                    ntilt = max(target_tilt, tilt - PANTILT_DP/2)
+                    ntilt = max(target_tilt, self.tilt - PANTILT_DP/2)
 
                 try:
                     pca.setRotationAngle(1, npan)
-                    pan = npan
+                    self.pan = npan
                     pca.setRotationAngle(0, ntilt)
-                    tilt = ntilt
+                    self.tilt = ntilt
 
                 except:
                     self.logerr(traceback.format_exc())
