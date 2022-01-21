@@ -32,6 +32,7 @@ ament_python_install_package(${PROJECT_NAME})
 # install Python executables
 install(PROGRAMS
   nodes/drivers
+  nodes/sayit
   DESTINATION lib/${PROJECT_NAME}
 )
 

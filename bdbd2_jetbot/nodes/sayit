@@ -15,11 +15,11 @@
 #   limitations under the License.
 
 import rclpy
-from bdbd2_jetbot.drivers import Drivers
+from bdbd2_jetbot.sayit import Sayit
 
 def main(args=None):
     rclpy.init(args=args)
-    node = Drivers()
+    node = Sayit()
     node.run()
     if rclpy.ok():
         rclpy.shutdown()
