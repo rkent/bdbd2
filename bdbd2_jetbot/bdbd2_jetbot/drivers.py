@@ -42,10 +42,10 @@ import threading
 import time
 import traceback
 
-from Adafruit_MotorHAT import Adafruit_MotorHAT
 from bdbd2_msgs.msg import MotorsRaw, PanTilt
 from bdbd2_msgs.srv import GetPanTilt, SetPanTilt
-from bdbd2_jetbot.libpy.PCA9685 import PCA9685
+from bdbd2_jetbot.libpy.PanTiltHat import PanTiltDriver
+from bdbd2_jetbot.libpy.MotorHat import MotorDriver
 import rclpy
 from rclpy.node import Node
 
@@ -53,6 +53,7 @@ from rclpy.node import Node
 NODE_NAME = 'bdbd2_drivers'
 
 # Pan/Tilt constants
+PANTILT_ADDRESS = 0x40 # default for the waveshare pan/tilt hat
 # See RKJ 2021-03-04 p 78 for earlier angle corrections
 # Use bdbd_docker/test/ptcal_apriltag.py for center calibration
 # centers
@@ -71,8 +72,10 @@ PANTILT_PERIOD = 0.01 # Rate in seconds that the pantilt thread moves the mechan
 SETTLE_SECONDS = 0.10 # allow the pan tilt to settle before sending service reponse
 
 # Motor constants
-motor_left_ID = 1
-motor_right_ID = 2
+MOTOR_ADDRESS = 0x44 # Set on bdbd power board with waveshare motor hat
+motor_left_ID = 0
+motor_right_ID = 1
+motor_polarities = (-1.0, 1.0)
 
 class Drivers(Node):
     """Class for a ROS2 node that interfaces with basic hardware on BDBD robot"""
@@ -102,11 +105,9 @@ class Drivers(Node):
         # Motors setup
         # Adapted from https://github.com/dusty-nv/jetbot_ros/blob/master/scripts/jetbot_motors.py
         # Adapted by R. Kent James <kent@caspia.com> for bdbd robot
-        motor_driver = Adafruit_MotorHAT(i2c_bus=1)
-        self.motor_left = motor_driver.getMotor(motor_left_ID)
-        self.motor_right = motor_driver.getMotor(motor_right_ID)
+        self.motor_driver = MotorDriver(address=MOTOR_ADDRESS)
         # stop the motors as precaution
-        self.all_stop()
+        self.motor_driver.stop()
         self.motors_sub = self.create_subscription(MotorsRaw, 'motors/cmd_raw', self.motors_sub_cb, 1)
 
     def motors_sub_cb(self, msg:MotorsRaw):
@@ -118,32 +119,16 @@ class Drivers(Node):
     def set_speed(self, motor_ID:int, value:float):
         """Set the speed of main robot motors
         
-        :param motor_ID: which motor, left=1 right=2
+        :param motor_ID: which motor, left=0 right=1
         :param value:    motor speed, -1.0 to 1.0
         """
-        # bdbd motors are wired backwards, so reverse value
-        value = -value
-        max_pwm = 255.0 # This allows for full 12 volt output
-        speed = int(min(max(abs(value * max_pwm), 0), max_pwm))
 
-        if motor_ID == 1:
-            motor = self.motor_left
-        elif motor_ID == 2:
-            motor = self.motor_right
-        else:
-            self.logerr('set_speed(%d, %f) -> invalid motor_ID=%d', motor_ID, value, motor_ID)
-            return
-        
         MAX_ERRORS = 4
         success = False
         for count in range(MAX_ERRORS):
             count += 1
             try:
-                motor.setSpeed(speed)
-                if value > 0:
-                    motor.run(Adafruit_MotorHAT.FORWARD)
-                else:
-                    motor.run(Adafruit_MotorHAT.BACKWARD)
+                self.motor_driver.runf(motor_ID, motor_polarities[motor_ID] * value), 
                 success = True
             except:
                 self.logwarn('Motor setSpeed error, retrying')
@@ -191,8 +176,7 @@ class Drivers(Node):
         message signals a thread exit.
         """
 
-        pca = PCA9685()
-        pca.setPWMFreq(50)
+        pca = PanTiltDriver(address=PANTILT_ADDRESS)
         # self.pan, self.tilt are the raw values
         # these are set to slightly off center to force initial motion
         self.pan = PANC - 3
@@ -256,7 +240,7 @@ class Drivers(Node):
         pca.setRotationAngle(1, PAN_CENTER)
         pca.setRotationAngle(0, TILT_CENTER)
         time.sleep(.1) # Let the pca driver do its thing
-        pca.exit_PCA9685()
+        pca.exit()
         print('Exiting pantilt thread')
 
     def run(self):

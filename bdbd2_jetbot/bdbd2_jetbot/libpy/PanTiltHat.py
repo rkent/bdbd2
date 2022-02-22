@@ -9,7 +9,15 @@ from Pypi Adafruit_MotorHAT which has MIT license specified.
 Modified by R. Kent James <kent@caspia.com> All modifications done under Apache 2 license.
 """
 
-from PCA9685 import PCA9685
+# Allowing running locally
+try:
+    from .PCA9685 import PCA9685
+except:
+    import os
+    import sys
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    sys.path.append(os.path.dirname(SCRIPT_DIR))
+    from PCA9685 import PCA9685
 
 class PanTiltDriver():
     """Driver for Waveshare pan tilt hat"""
