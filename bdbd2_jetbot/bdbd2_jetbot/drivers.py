@@ -46,8 +46,10 @@ from bdbd2_msgs.msg import MotorsRaw, PanTilt
 from bdbd2_msgs.srv import GetPanTilt, SetPanTilt
 from bdbd2_jetbot.libpy.PanTiltHat import PanTiltDriver
 from bdbd2_jetbot.libpy.MotorHat import MotorDriver
+from bdbd2_jetbot.libpy.BatteryStatus import BatteryStatus
 import rclpy
 from rclpy.node import Node
+from sensor_msgs.msg import BatteryState
 
 # General constants
 NODE_NAME = 'bdbd2_drivers'
@@ -76,6 +78,10 @@ MOTOR_ADDRESS = 0x44 # Set on bdbd power board with waveshare motor hat
 motor_left_ID = 0
 motor_right_ID = 1
 motor_polarities = (-1.0, 1.0)
+
+# Battery constants
+BATTERY_ADDRESS = 0x41
+BATTERY_RATE = 0.20 # time in seconds between battery state messages
 
 class Drivers(Node):
     """Class for a ROS2 node that interfaces with basic hardware on BDBD robot"""
@@ -109,6 +115,10 @@ class Drivers(Node):
         # stop the motors as precaution
         self.motor_driver.stop()
         self.motors_sub = self.create_subscription(MotorsRaw, 'motors/cmd_raw', self.motors_sub_cb, 1)
+
+        # Batteries setup
+        self.battery_status = BatteryStatus(address=BATTERY_ADDRESS)
+        self.battery_pub = self.create_publisher(BatteryState, 'battery_state', 1)
 
     def motors_sub_cb(self, msg:MotorsRaw):
         """Callback for MotorsRaw message"""
@@ -186,6 +196,7 @@ class Drivers(Node):
         responseQueue = None
         pca.setRotationAngle(1, self.pan)
         pca.setRotationAngle(0, self.tilt)
+        slew = 0.005
 
         while True:
             panTiltMsg = None
@@ -230,7 +241,8 @@ class Drivers(Node):
                     self.logerr(traceback.format_exc())
                     break
 
-                time.sleep(max(0, start - time.time()))
+                #time.sleep(max(0, start - time.time()))
+                time.sleep(slew)
 
             if responseQueue:
                 responseQueue.put(None)
@@ -243,21 +255,50 @@ class Drivers(Node):
         pca.exit()
         print('Exiting pantilt thread')
 
+    def battery_run(self):
+        """Thread runner to publish battery messages"""
+        start = time.time()
+        while rclpy.ok():
+            msg = self.battery_status.batteryState()
+            msg.header.stamp = self.get_clock().now().to_msg()
+            self.battery_pub.publish(msg)
+
+            # publish battery info every 10 seconds
+            if time.time() - start > 10.0:
+                voltage = self.battery_status.voltage
+                current = self.battery_status.current
+                usage = self.battery_status.milliwatt_hours
+                self.loginfo(f'Volts: {voltage:.3f} Current: {current:.3f} Mwh: {usage:.3f}')
+                start = time.time()
+
+            time.sleep(BATTERY_RATE)
+        print('Exiting battery thread')
+
+
     def run(self):
         """Main program for the node"""
         pantilt_thread = threading.Thread(target=self.pantilt_run)
         pantilt_thread.start()
 
+        self.battery_status.run()
+        battery_thread = threading.Thread(target=self.battery_run)
+        battery_thread.start()
+    
         try:
             rclpy.spin(self)
         except KeyboardInterrupt:
             pass
 
+        # Shutdown pan tilt
         # signal thread to exit
         self.pantilt_queue.put([False, None])
         self.all_stop()
         time.sleep(.1)
         pantilt_thread.join()
+
+        # Shutdown battery
+        self.battery_status.stop()
+        battery_thread.join()
         self.destroy_node()
         print('drivers node shutdown')
 
