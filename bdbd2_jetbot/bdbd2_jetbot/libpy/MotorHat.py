@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 #
 #   Copyright 2022 R. Kent James <kent@caspia.com>
 #
