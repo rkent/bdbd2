@@ -33,6 +33,7 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   nodes/drivers
   nodes/sayit
+  nodes/hearit
   DESTINATION lib/${PROJECT_NAME}
 )
 

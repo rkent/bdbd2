@@ -15,11 +15,11 @@
 #   limitations under the License.
 
 import rclpy
-from bdbd2_jetbot.sayit import Sayit
+from bdbd2_jetbot.hearit import Hearit as LocalNode
 
 def main(args=None):
     rclpy.init(args=args)
-    node = Sayit()
+    node = LocalNode()
     node.run()
     if rclpy.ok():
         rclpy.shutdown()
