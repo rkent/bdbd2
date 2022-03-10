@@ -1,10 +1,12 @@
+#!/usr/bin/env python3
 # extension of speech recognition to use the reSpeaker features. Main thing is we
 # use the respeaker SPEECHDETECTED flag instead of measured energy.
 import os
 import math
 import collections
 import audioop
-from speech_recognition import AudioSource, Recognizer, AudioData
+import pyaudio
+from speech_recognition import AudioSource, Recognizer, AudioData, Microphone, UnknownValueError
 from bdbd2_jetbot.libpy.respeaker_tuning import find
 from numpy import median
 dev = find()
@@ -14,6 +16,20 @@ def is_speech():
         return True
     else:
         return False
+
+def indexFromName(name):
+    devices = []
+    pa = pyaudio.PyAudio()
+    for i in range(pa.get_device_count()):
+        device = pa.get_device_info_by_index(i)
+
+        if name in device['name'].lower():
+            print('Alsa input device: ' + device['name'])
+            return i
+        devices.append(device['name'])
+
+    print("Could not find input device, available devices: " + str(devices))
+    raise ValueError('device not found')
 
 class ReRecognizer(Recognizer):
     ''' Speech recognizer, adapted from speech_recognition to support respeaker microphone array
@@ -140,3 +156,25 @@ class ReRecognizer(Recognizer):
         frame_data = b"".join(frames)
 
         return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH), median(angles)
+
+if __name__ == '__main__':
+    import traceback
+    pa = pyaudio.PyAudio()
+    device = indexFromName('respeaker')
+    mic = Microphone(device_index=device)
+    rr = ReRecognizer()
+    recognizer = rr.recognize_google_cloud
+    google_key = ''
+    with open('/secrets/stalwart-bliss-270019-7159f52eb443.json', 'r') as f:
+        google_key = f.read()
+    try:
+        print('\n   ***Say something!***\n')
+        with mic as source:
+            audio, angle = rr.listen(source)
+            print(f'Sound heard at angle: {angle}')
+        text = recognizer(audio, credentials_json=google_key)
+        print(f'We heard text: {text}')
+    except UnknownValueError:
+        print('sound not recognized as speech')
+    except BaseException as e:
+        print(traceback.format_exc())

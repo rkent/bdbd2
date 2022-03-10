@@ -26,9 +26,8 @@ except:
 import os
 import traceback
 import speech_recognition as sr
-from bdbd2_jetbot.libpy.rerecognizer import ReRecognizer
+from bdbd2_jetbot.libpy.rerecognizer import ReRecognizer, indexFromName
 import json
-import pyaudio
 import threading
 from bdbd2_msgs.msg import AngledText
 from std_msgs.msg import Bool
@@ -62,19 +61,6 @@ class Hearit(Node):
     def talking_get(self):
         return self.is_talking
 
-    def indexFromName(self, pa, name):
-        devices = []
-        for i in range(pa.get_device_count()):
-            device = pa.get_device_info_by_index(i)
-
-            if name in device['name'].lower():
-                self.loginfo('Alsa input device: ' + device['name'])
-                return i
-            devices.append(device['name'])
-
-        self.logerr("Could not find input device, available devices: " + str(devices))
-        raise ValueError('device not found')
-
     def run(self):
         self.loginfo('Running node hearit')
 
@@ -83,8 +69,7 @@ class Hearit(Node):
         self.mikestatuspub = self.create_publisher(Bool, 'mike/status', 1)
         self.talking_sub = self.create_subscription(Bool, 'sayit/talking', self.talking_cb, 10)
 
-        pa = pyaudio.PyAudio()
-        device = self.indexFromName(pa, 'respeaker')
+        device = indexFromName('respeaker')
         self.mic = sr.Microphone(device_index=device)
         self.r = ReRecognizer(status_cb=self.status_cb, talking_get=self.talking_get)
         self.recognizer = self.r.recognize_google_cloud
