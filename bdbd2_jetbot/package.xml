@@ -16,10 +16,17 @@
 
   <depend>sensor_msgs</depend>
   <depend>bdbd2_msgs</depend>
+  <depend>audio_common_msgs</depend>
   <depend>rclpy</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+
+  <exec_depend>python3-smbus</exec_depend>
+  <exec_depend>python-speechrecognition-pip</exec_depend>
+  <exec_depend>python-usb-pip</exec_depend>
+  <exec_depend>flac</exec_depend>
+  <exec_depend>python3-googleapi</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
