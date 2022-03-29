@@ -6,9 +6,3 @@
 # Play a standard sound
 echo 'Playback test'
 aplay /usr/share/sounds/alsa/Front_Center.wav
-
-echo 'Talk for 5 seconds'
-arecord -d 5 -f s32_LE -r 16000 /tmp/test.wav
-
-echo 'Playing back what you said'
-aplay /tmp/test.wav
